@@ -1,0 +1,58 @@
+@page "/history"
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+<div class="wrap">
+    <h1>Reifen Historie</h1>
+</div>
+
+<table>
+<tr>
+    <th>Id</th>
+    <th>Auto Id</th>
+    <th>Typ</th>
+    <th>Mischung</th>
+    <th>Position</th>
+    <th>Grooved</th>
+    <th>Sipped</th>
+</tr>
+
+@foreach (Tire item in Historie)
+{
+    <tr>
+        <th>@item.TireId</th>
+        <th>@item.CarId</th>
+        <th>@item.Type.Type</th>
+        <th>@item.Type.Variant</th>
+        <th>@item.Position</th>
+        <th>@item.Grooved</th>
+        <th>@item.Sipped</th>
+    </tr>
+}
+
+
+</table>
+
+</AuthorizeView>
+
+
+@code {
+
+    private List<Tire> Historie = new List<Tire>();
+    private int userrights = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+        try
+        {
+            Historie = DB.DataBase.loadTireAll();
+        }
+        catch
+        {
+        }
+    }
+}

@@ -1,0 +1,154 @@
+@page "/tireProcessing"
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+
+    <h3>Reifen in Bearbeitung</h3>
+
+    @if (!hideEdit)
+    {
+        <EditForm Model="model1" OnValidSubmit="@HandleValidSubmit" Context="tires">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <label for="idId">Id</label>
+            <InputText id="idId" @bind-Value="id" type=" number"></InputText>
+            <label for="statusId">Status</label>
+            <InputSelect id="statusId" @bind-Value="status" required>
+                <option value="none" selected disable hidden>Select an option</option>
+                <option value="In Bearbeitung">In Bearbeitung</option>
+                <option value="Im Umlauf">Im Umlauf</option>
+                <option value="Heizen">Heizen</option>
+                <option value="Lager">Lager</option>
+            </InputSelect>
+
+            <label for="pressureId">Druck</label>
+            <InputText id="pressureId" type="number" step="0.01" caption required @bind-Value=pressure />
+            <label for="tempId">Temperarur</label>
+            <InputText id="tempId" type="number" step="0.01" required @bind-Value="temp" />
+
+
+
+            <button class="btn  btn-primary" type="submit">Submit</button>
+        </EditForm>
+        @*<button class="btn  btn-primary" @onclick="calcPressure">Druck berechnen</button>*@
+
+    }
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Typ</th>
+                <th>Mischung</th>
+                <th>Grooved</th>
+                <th>Sipped</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Tire Reifen in AllTires)
+            {
+                if (Reifen.Status == "In Bearbeitung" && Reifen.RaceId == Race.CurrentRace.ID)
+                {
+                    <tr>
+                        <td> <button @onclick="() => change(Reifen)">@Reifen.TireId</button></td>
+                        <td>@Reifen.Type.Type</td>
+                        <td>@Reifen.Type.Variant</td>
+                        <td>@Reifen.Grooved</td>
+                        <td>@Reifen.Sipped</td>
+                    </tr>
+
+                }
+            }
+        </tbody>
+    </table>
+
+</AuthorizeView>
+
+
+@code {
+    bool hideEdit = true;
+    List<Tire> AllTires = new List<Tire>();
+    string model1 = "";
+    string status = "";
+    string temp = "";
+    string pressure = "";
+    string id = "";
+    Tire currentTire = null;
+
+    private int userrights = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+        if (Race.CurrentRace == null)
+        {
+            Race.setRace(DataBase.loadRacesAll().OrderByDescending(i => i.ID).First().Name);
+        }
+
+
+        AllTires = DB.DataBase.loadTireAll();
+
+    }
+    private void change(Tire reifen)
+    {
+        hideEdit = false;
+        id = reifen.TireId.ToString();
+        status = reifen.Status;
+        temp = reifen.TireTemperature.ToString();
+        pressure = reifen.Pressure.ToString().Replace(".", ",");
+        currentTire = reifen;
+    }
+    private void HandleValidSubmit()
+    {
+        hideEdit = true;
+        saveTire();
+    }
+    private void saveTire()
+    {
+        currentTire.Status = status;
+        currentTire.TireTemperature = Convert.ToDouble(temp);
+        double tempDouble = 0;
+        if (pressure.Contains("."))
+        {
+            string[] splitted = pressure.Split(".");
+            if (splitted.Count() == 2)
+            {
+
+                tempDouble = Convert.ToDouble(splitted[0]);
+                tempDouble += Convert.ToDouble(splitted[1]) / (splitted[1].Length * 10);
+            }
+        }
+        else
+        {
+            tempDouble = Convert.ToDouble(pressure);
+        }
+        currentTire.Pressure = tempDouble;
+        DataBase.saveTire(currentTire);
+    }
+    private void calcPressure()
+    {
+        double tempDouble = 0;
+        if (pressure.Contains("."))
+        {
+            string[] splitted = pressure.Split(".");
+            if (splitted.Count() == 2)
+            {
+
+                tempDouble = Convert.ToDouble(splitted[0]);
+                tempDouble += Convert.ToDouble(splitted[1]) /( splitted[1].Length*10);
+            }
+        }
+        else
+        {
+            tempDouble = Convert.ToDouble(pressure);
+        }
+        currentTire.Pressure = tempDouble;
+        currentTire.calculatePressure();
+        pressure = currentTire.Pressure.ToString().Replace(".", ",");
+        DataBase.saveTire(currentTire);
+    }
+}
+
+

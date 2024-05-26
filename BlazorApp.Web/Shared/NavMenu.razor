@@ -1,0 +1,110 @@
+﻿@inject ISessionStorageService sessionStorage;
+<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">Tire Management</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<AuthorizeView>
+    <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+        <ul class="nav flex-column">
+            @if (userrights == 1 || userrights == 2)
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="/cars" Match="NavLinkMatch.All">
+                        <span class="oi oi-home" aria-hidden="true"></span> Aktuelle Autos
+                    </NavLink>
+                </li>
+            }
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="raceSettings">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Renneinstellungen
+                </NavLink>
+            </li>
+            @if (userrights == 0)
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="weathersettings">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> Wetter Daten
+                    </NavLink>
+                </li>
+            }
+            @if (userrights == 0 || userrights == 2)
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="TireCirculation">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> Reifen im Umlauf
+                    </NavLink>
+                </li>
+            }
+            @if (userrights == 0 || userrights == 2)
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="tireProcessing">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> Reifen in Bearbeitung
+                    </NavLink>
+                </li>
+            }
+            @if (userrights == 0 || userrights == 2)
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="tireOrder">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> Reifen bestellen
+                    </NavLink>
+                </li>
+            }
+            @if (userrights == 1)
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="formula">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> Reifendruck
+                    </NavLink>
+                </li>
+            }
+
+            @if (userrights == 2)
+            {
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="userSettings">
+                        <span class="oi oi-list-rich" aria-hidden="true"></span> Nutzereinstellungen
+                    </NavLink>
+                </li>
+            }
+       <li class="nav-item px-3">
+                <NavLink class="nav-link" href="history">
+                    <span class="oi oi-list-rich" aria-hidden="true"></span> Show Tire History
+                </NavLink>
+            </li>
+        </ul>
+    </div>
+</AuthorizeView>
+
+
+
+@code {
+    private int userrights = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+    }
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

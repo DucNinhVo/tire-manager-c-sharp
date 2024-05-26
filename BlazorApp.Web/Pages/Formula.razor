@@ -1,0 +1,80 @@
+@page "/formula"
+
+@using BlazorApp.DB
+@using BlazorApp.Extensions
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+    <div class="wrap">
+        <h1>Reifendruckformel</h1>
+    </div>
+
+
+
+    <div id="formula">
+        <div class="wrap">
+            <h2>Reifendruckformel ändern</h2>
+        </div>
+
+        <div class="wrap">
+            <div class="marginRight">Formel:</div>
+            <input type="text" name="newFormula" id="newFormula" @bind-value=formula.parameterText size="53">
+        </div>
+
+        <button class="button btnChooseSave" @onclick="saveFormula">Formeländerung speichern</button>
+
+        <br />
+        <br />
+        <div>
+            <p>
+                Mögliche Parameter: {REIFENDRUCK}, {FELGENTEMP}, {STRECKENTEMP} und {LUFTTEMP}
+                <br />
+                Alle Eingaben müssen mit Leerzeichen getrennt sein.
+                <br />
+                Z.B.: {REIFENDRUCK} * ( {FELGENTEMP} + 273,15 ) / 293,15 + 1,013 * ( {FELGENTEMP} - 20 ) /  293,15
+            </p>
+        </div>
+    </div>
+</AuthorizeView>
+
+
+
+@code {
+    private Parameter formula = new Parameter();
+    private int userrights = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+
+
+        this.formula = DataBase.loadParameterByName("FORMULA");
+        if (formula == null)
+        {
+            formula = new Parameter();
+            formula.parameterId = DataBase.getSequence("Parameter");
+            formula.parameterName = "FORMULA";
+            formula.parameterText = "";
+        }
+        else if (formula.parameterText == null)
+        {
+            formula.parameterText = "";
+        }
+    }
+
+    private void saveFormula()
+    {
+        DataBase.saveParameter(formula);
+    }
+
+
+
+
+}

@@ -1,0 +1,194 @@
+@page "/userSettings"
+@inject ISessionStorageService sessionStorage;
+
+    <AuthorizeView>
+        <div class="wrap">
+            <h1>Nutzer bearbeiten / hinzufügen</h1>
+        </div>
+    </AuthorizeView>
+
+<div id="top">
+    <div class="wrap">
+        <h1>Nutzereinstellungen</h1>
+    </div>
+</div>
+
+<div class="center">
+    <h2>Alle Nutzer:</h2>  
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Nutzername</th>
+            <th>Berechtigungsstufe</th>
+        </tr>
+        @foreach (var user in userList)
+        {
+            <tr>
+                <th>@user.UserID</th>
+                <th>@user.UserName</th>
+                <th>@user.Priviledges</th>
+            </tr>
+        }
+    </table>
+    <div class="text" style="margin-top: 10px; margin-bottom: 50px;">
+        <p>Berechtigungsstufen:</p>
+        <p>0 = Mitarbeiter &emsp;&emsp; 1 = Ingenieur &emsp;&emsp; 2 = Reifenmanager</p>   
+    </div>
+</div>
+
+<div class="center" style="margin-top: 50px;">
+    <div class="wrap">
+        <h2>Nutzer hinzufügen / bearbeiten</h2>
+    </div>
+    <div class="text">
+        Bei gleicher ID wird der Nutzer bearbeitet und bei neuer ID hinzugefügt.
+    </div>
+    <EditForm Model="model" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    ID
+    <InputNumber id="id" @bind-Value="id" />
+    Name
+    <InputText id="name" @bind-Value="Name" />
+    Passwort
+    <InputText id="pass" @bind-Value="password" />
+    Berechtigungsstufe
+    <InputNumber id="rights" @bind-Value="priviledges" />
+    </EditForm>
+    
+    <div class="text">@messageSave</div>
+
+    <button class="button btnSave" @onclick="HandleValidSubmit">Speichern</button>
+</div>
+
+
+<div id="delete" style="margin-top: 50px;">
+    <div class="wrap">
+        <h2>Nutzer entfernen</h2>
+    </div>
+    <div class="center">
+        <select name="selectDelete" id="selectDelete"  @bind="@selected" style="font-size: 25px; padding: 10px;">
+            <option value=9999999>Niemanden</option>
+            @foreach (var user in userList)
+            {
+                <option value=@user.UserID>@user.UserName</option>
+            }
+        </select>   
+    </div>
+    <div class="center">
+        <button class="button btnDelete" @onclick="delete" style="width: 40%;">Entfernen</button>
+    </div>
+
+    <div class="text">@messageDelete</div>
+</div>
+
+<div class="wrap">
+    <button  class="button btnTop" onClick="document.getElementById('top').scrollIntoView();">Zurück zur Nutzerliste</button>
+</div>
+
+    
+@code {
+    private int userrights = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+    }
+
+    string model = "";
+    string Name;
+    string password;
+    Nullable<int> id;
+    Nullable<int> priviledges;
+    string messageSave;
+    string messageDelete;
+    Nullable<int> selected = 9999999;
+    private List<User> userList;
+
+
+
+
+    private void HandleValidSubmit()
+    {
+        if (id.HasValue)
+        {
+            if (string.IsNullOrEmpty(Name))
+            {
+                messageSave = "Name darf nicht leer sein!";
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(password))
+                {
+                    messageSave = "Passwort darf nicht leer sein!";
+                }
+                else
+                {
+                    if (priviledges.HasValue)
+                    {
+                        if (priviledges.Value >= 0 && priviledges.Value <= 2)
+                        {
+                            saveUser();
+                            messageSave = "";
+                        }
+                        else
+                        {
+                            messageSave = "Nutzer nicht hinzugefügt! Die Berechtigungsstufe muss zwischen 0 und 2 liegen!";
+                        }
+                    }
+                    else
+                    {
+                        messageSave = "Berechtigungsstufe darf nicht leer sein!";
+                    }
+                }
+            }
+        }
+        else
+        {
+            messageSave = "ID darf nicht leer sein!";
+        }
+    }
+
+    private void saveUser()
+    {
+
+        User user = new User(Name, id.Value, priviledges.Value, password);
+        user.UserName = Name;
+
+        BlazorApp.DB.DataBase.saveUser(user);
+        Name = "";
+        password = "";
+        id = null;
+        priviledges = null;
+
+        userList = BlazorApp.DB.DataBase.loadUsersAll();
+
+    }
+
+    private void delete()
+    {
+        if (selected.Value != 9999999)
+        {
+            User temp = BlazorApp.DB.DataBase.loadUserById(selected.Value);
+            messageDelete = temp.UserName + " wurde entfernt!";
+            BlazorApp.DB.DataBase.deleteUser(temp);
+            selected = 9999999;
+
+            userList = BlazorApp.DB.DataBase.loadUsersAll();
+        }
+        else
+        {
+            messageDelete = "Bitte wähle einen Nutzer zum entfernen!";
+        }        
+        
+        
+    }
+
+    protected override void OnInitialized()
+    {
+        this.userList = BlazorApp.DB.DataBase.loadUsersAll();
+    }
+}

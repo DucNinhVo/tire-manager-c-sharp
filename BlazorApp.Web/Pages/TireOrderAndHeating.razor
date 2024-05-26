@@ -1,0 +1,254 @@
+﻿@page "/orderandheating"
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+    <h3>TireSetOrder</h3>
+    <table class='table'>
+    <thead>
+        <tr>
+            <th>TireSetId</th>
+            <th>TireType</th>
+            <th>Variant</th>
+            <th>OrderDate</th>
+            <th>OrderTime</th>
+            <th>PickUpTime</th>
+            <th>Note</th>          
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tireSet in orderList)
+        {
+            <tr>              
+                <td>@tireSet.tireSetId</td>
+                <td>@tireSet.tireTypeId</td>
+                <td>@tireSet.tireVariant</td>
+                <td>@tireSet.orderDate</td>
+                <td>@tireSet.orderTime</td>
+                <td>@tireSet.pickUpTime</td>
+                <td>@tireSet.specNote</td>
+            </tr>
+        }
+    </tbody>
+    </table>
+
+    <EditForm Model="model1" OnValidSubmit="@HandleValidSubmit1" Context="tires">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <InputText id="id" @bind-Value="id" required/>
+    
+    
+    <InputSelect @bind-Value="tireType" required>
+        <option value="none" selected disable hidden>Select an option</option>
+        <option value="1">Slick - Cold (H/E)</option>
+        <option value="2">Slick - Medium (G/D)</option>
+        <option value="3">Slick - Hot (I/F)</option>
+        <option value="4">Intermediate (H+/E+)</option>
+        <option value="5">Rain - Dry wet (T/T)</option>
+        <option value="6">Rain - Heavy wet (A/A)</option
+    </InputSelect>
+    <InputSelect @bind-Value="tireVar" required>
+        <option value="none" selected disable hidden>Select an option</option>
+        <option value="(|)">Siped</option>
+        <option value="(-)">Extra Grooved</option>
+        <option value="(+)">Sipped and Extra grooved</option>      
+    </InputSelect>
+    
+    <InputText id="orderDate" type="date" required @bind-Value=orderDate />
+    <InputText id="orderTime" type="time" required @bind-Value="orderTime" />
+    <InputText id="pickUpTime" type="time" required @bind-Value="pickUpTime" />
+    <InputText id="note" @bind-Value="note" />
+
+    
+    <button class="btn  btn-primary" type="submit">Submit</button>
+    </EditForm>
+
+    <h3>TireSetHeating</h3>
+
+    <table class='table'>
+    <thead>
+        <tr>
+            <th>TireSetId</th>
+            <th>StartingTemp</th>
+            <th>HeatingTemp</th>
+            <th>HeatingDuration</th>
+            <th>HeatingStartTime</th>
+            <th>HeatingEndTime</th>
+           
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tireSet in heatingList)
+        {
+            <tr>
+                <td>@tireSet.tireSetId</td>
+                <td>@tireSet.startingTemp</td>
+                <td>@tireSet.heatingTemp</td>
+                <td>@tireSet.heatingDuration</td>
+                <td>@tireSet.heatingStartTime</td>
+                <td>@tireSet.heatingEndTime</td>
+            </tr>
+        }
+    </tbody>
+    </table>
+
+    <EditForm Model="model2" OnValidSubmit="@HandleValidSubmit2" Context="tires2">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <InputText id="id" @bind-Value="id" required/>
+    <InputText id="startingTemp" @bind-Value="startingTemp" required/>
+    <InputText id="heatingTemp" @bind-Value="heatingTemp" />
+    <InputText id="heatingDuration" @bind-Value="duration" />
+    <InputText id="heatingStartTime" type="time" @bind-Value="heatingStartTime" />
+    <InputText id="heatingEndTime" type="time" @bind-Value="heatingEndTime" />
+    
+    <button class="btn  btn-primary" type="submit">Submit</button>
+    </EditForm>
+
+    <h3>InstalledTires</h3>
+
+    <table class='table'>
+    <thead>
+        <tr>
+            <th>TireId</th>
+            <th>TireSetId</th>
+            <th>Pressure</th>
+            <th>TireTemp</th>           
+            <th>TirePosition</th>                     
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tire in tireList)
+        {
+            <tr>
+                <td>@tire.TireId</td>
+                <td>@tire.TireSetId</td>
+                <td>@tire.Pressure</td>
+                <td>@tire.TireTemperature</td>
+                <td>@tire.Position</td>              
+            </tr>
+        }
+    </tbody>
+    </table>
+
+    <EditForm Model="model3" OnValidSubmit="@HandleValidSubmit3" Context="tires3">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+            <InputText id="tireId" @bind-Value="tireId" required/>
+            <InputText id="tireSetId" @bind-Value="tireSetId" required/>
+            <InputText id="coldPress" @bind-Value="press" required />
+            <InputText id="tireTemp" @bind-Value="tireTemp" required />   
+            <InputSelect @bind-Value="position" required>
+                <option value="none" selected disable hidden>Select an option</option>
+                <option value="FR">Front Right</option>
+                <option value="FL">Front Left</option>
+                <option value="RR">Rear Right</option> 
+                <option value="RL">Rear Left</option>
+            </InputSelect>
+    
+            <button class="btn  btn-primary" type="submit">Submit</button>        
+     </EditForm>      
+</AuthorizeView>
+
+
+
+
+
+@code {
+    private int userrights = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+    }
+
+    string model1 = "";
+    string model2 = "";
+    string model3 = "";
+    string id;
+    string tireType;
+    int tireVar;
+    string orderDate;
+    string orderTime;
+    string pickUpTime;
+    string startingTemp;
+    string heatingTemp;
+    string duration;
+    string heatingStartTime;
+    string heatingEndTime;
+    string note;
+    string tireId;
+    string tireSetId;  
+    string tireTemp;
+    string press;
+    string position;
+
+    private List<TireSet> orderList;
+    private List<TireSet> heatingList;
+    private List<Tire> tireList;
+
+    private void HandleValidSubmit1()
+    {
+        saveTireSetOrder();
+    }
+
+    private void saveTireSetOrder()
+    {
+
+        TireSet tireSet = new TireSet(Convert.ToInt32(id), Convert.ToInt32(tireType), tireVar, orderDate, orderTime, pickUpTime, note);
+
+
+        BlazorApp.DB.DataBase.saveTireSetOrder(tireSet);      
+        id = "";                     
+        note = "";
+
+        orderList = BlazorApp.DB.DataBase.loadTireSetOrderAll();
+    }
+
+    private void HandleValidSubmit2()
+    {
+        saveTireSetHeating();
+    }
+
+    private void saveTireSetHeating()
+    {
+        TireSet tireSet = new TireSet(Convert.ToInt32(id),Convert.ToDouble(startingTemp),Convert.ToDouble(heatingTemp),Convert.ToInt32(duration),heatingStartTime,heatingEndTime);
+
+        BlazorApp.DB.DataBase.saveTireSetHeating(tireSet);      
+        id = "";
+        startingTemp = "";
+        heatingTemp = "";
+        duration = "90";
+        heatingStartTime = "";
+        heatingEndTime = "";
+
+        heatingList = BlazorApp.DB.DataBase.loadTireSetHeatingAll();
+    }
+
+    private void HandleValidSubmit3()
+    {
+        saveTire();
+    }
+
+    private void saveTire()
+    {
+        Tire tire = new Tire(Convert.ToInt32(tireId), Convert.ToInt32(tireSetId), Convert.ToDouble(press), Convert.ToDouble(tireTemp), position);
+        BlazorApp.DB.DataBase.saveTire(tire);  
+        tireList = BlazorApp.DB.DataBase.loadTireAll();
+    }
+
+    protected override void OnInitialized()
+    {
+        this.orderList = BlazorApp.DB.DataBase.loadTireSetOrderAll();
+        this.heatingList = BlazorApp.DB.DataBase.loadTireSetHeatingAll();
+        this.tireList = BlazorApp.DB.DataBase.loadTireAll();
+    }
+
+
+}
+
+

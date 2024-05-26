@@ -1,0 +1,225 @@
+@page "/raceSettings"
+@using BlazorApp.Data
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+    <div class="wrap">
+        <h1>Renneinstellungen</h1>
+    </div>
+
+    <div id="choose">
+        <div class="wrap">
+            <h2>Aktuelles Rennen ändern</h2>
+        </div>
+
+        <div class="center">
+            <div class="text">
+                Aktuelles Rennen:  @if (activeRace != null)
+                {
+                    @activeRace.Name
+                }
+            </div>
+
+            <div class="text">
+                Neues aktives Rennen:
+            </div>
+
+            <select name="race" id="race" @bind="RaceSelectValue">
+                @foreach (var item in raceList)
+                {
+                    <option value="@item.Name">@item.Name</option>
+                }
+            </select>
+
+            <button class="button btnChooseSave" @onclick="changeRace">Speichern</button>
+        </div>
+    </div>
+    @if (userrights > 0)
+    {
+    <div id="create">
+        <div class="wrap">
+            <h2>Neues Rennen anlegen</h2>
+        </div>
+
+    <div class="wrap">
+        <div class="marginRight">Name</div>
+        <input type="text" name="raceName" id="raceName" size="60" @bind="NewRaceName"> 
+        
+    </div>            
+ 
+    <div class="center">
+        <h3>Kontingent eingeben:</h3>
+        
+        <table>
+        <tr>
+            <th>Reifenart</th>
+            <th>Mischung</th>
+            <th>Kontingent</th>
+            <th>Prefix</th>
+        </tr>
+        <tr>
+            <th>Slicks</th>
+            <th></th>
+            <th></th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>Cold</th>
+            <th><input type="number" @bind="SlickColdAmount"></th>
+            <th><input type="text"   @bind="SlickColdPrefix"></th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>Medium</th>
+            <th><input type="number" @bind="SlickMediumAmount"></th>
+            <th><input type="text"   @bind="SlickMediumPrefix"></th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>Hot</th>
+            <th><input type="number" @bind="SlickHotAmount"></th>
+            <th><input type="text"   @bind="SlickHotPrefix"></th>
+        </tr>
+        <tr>
+            <th>Inters</th>
+            <th>Intermediate</th>
+            <th><input type="number" @bind="InterAmount"></th>
+            <th><input type="text"   @bind="InterPrefix"></th>
+        </tr>
+        <tr>
+            <th>Rain</th>
+            <th></th>
+            <th></th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>Dry wet</th>
+            <th><input type="number" @bind="RainDryAmount"></th>
+            <th><input type="text"   @bind="RainDryPrefix"></th>
+        </tr>
+        <tr>
+            <th></th>
+            <th>Heavy wet</th>
+            <th><input type="number" @bind="RainWetAmount"></th>
+            <th><input type="text"   @bind="RainWetPrefix"></th>
+        </tr>
+    </table>
+    </div>
+
+        <button class="button btnChooseSave" style="margin-bottom: 10px;" @onclick="addNewRace">Rennen Speichern</button>
+    </div>
+    }
+</AuthorizeView>
+
+
+@code {
+    private int userrights = 0;
+    private Race activeRace = null;
+    List<Race> raceList = new List<Race>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+
+        if(Race.CurrentRace != null)
+        {
+            activeRace = Race.CurrentRace;
+        }
+        loadRacesList();
+        changeRace();
+
+    }
+    private void loadRacesList()
+    {
+        raceList = DataBase.loadRacesAll();
+    }
+
+    //Momentanes Rennen setzen
+    private string RaceSelectValue;
+    public void changeRace()
+    {
+        BlazorApp.Data.Race.setRace(RaceSelectValue);
+        activeRace = Race.CurrentRace;
+        if(activeRace == null)
+        {
+            Race.setRace(DataBase.loadRacesAll().OrderByDescending(i => i.ID).First().Name);
+            activeRace = Race.CurrentRace;
+        }
+        RaceSelectValue = activeRace.Name;
+    }
+    ///Amount
+    //Slick
+    private int SlickColdAmount = 0;
+    private int SlickMediumAmount = 0;
+    private int SlickHotAmount = 0;
+    //Inters
+    private int InterAmount = 0;
+    //Rain
+    private int RainDryAmount = 0;
+    private int RainWetAmount = 0;
+
+    ///Prefixes
+    //Slick
+    private string SlickColdPrefix = "";
+    private string SlickMediumPrefix = "";
+    private string SlickHotPrefix = "";
+    private string InterPrefix = "";
+    private string RainDryPrefix = "";
+    private string RainWetPrefix = "";
+
+    private String NewRaceName;
+
+    private void addNewRace()
+    {
+        if(NewRaceName.isNotNullOrEmpty() &&
+        SlickColdPrefix.isNotNullOrEmpty() &&
+        SlickMediumPrefix.isNotNullOrEmpty() &&
+        SlickHotPrefix.isNotNullOrEmpty() &&
+        InterPrefix.isNotNullOrEmpty() &&
+        RainDryPrefix.isNotNullOrEmpty() &&
+        RainWetPrefix.isNotNullOrEmpty())
+        {
+            Race NewRace = new Race(NewRaceName,
+                                    SlickColdPrefix,
+                                    SlickColdAmount,
+                                    SlickMediumPrefix,
+                                    SlickMediumAmount,
+                                    SlickHotPrefix,
+                                    SlickHotAmount,
+                                    InterPrefix,
+                                    InterAmount,
+                                    RainDryPrefix,
+                                    RainDryAmount,
+                                    RainWetPrefix,
+                                    RainWetAmount
+                                    );
+
+
+        }
+        loadRacesList();
+        clear();
+    }
+    private void clear()
+    {
+        NewRaceName = "";
+        SlickColdPrefix = "";
+        SlickMediumPrefix = "";
+        SlickHotPrefix = "";
+        InterPrefix = "";
+        RainDryPrefix = "";
+        RainWetPrefix = "";
+        SlickColdAmount = 0;
+        SlickMediumAmount = 0;
+        SlickHotAmount = 0;
+        InterAmount = 0;
+        RainDryAmount = 0;
+        RainWetAmount = 0;
+
+
+
+    }
+
+}

@@ -1,0 +1,85 @@
+@page "/weathersettings"
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+    <div class="wrap">
+        <h1>Wetter</h1>
+    </div>
+
+    <div>
+        <div class="text">Lufttemperatur</div>
+        <div class="input"><input type="number" min="-50" max="60" @bind="@AirTemp" @oninput="@((e) => { InputAir=(string)e.Value;})" style="width: 100%;"></div>
+        <div class="text">Asphalttemperatur </div>
+        <div class="input"><input type="number" min="-50" max="60" @bind="@AsphaltTemp" @oninput="@((e) => { InputTarmac=(string)e.Value;})" style="width: 100%;"></div>
+        <div class="text">Wetterbedingungen </div>
+        <div class="input"><input type="text" @bind="@WeatherCondition" style="width: 100%;"></div>
+    </div>
+
+    <button class="button save" @onclick="save">Speichern</button>
+
+    <table class='table'>
+        <thead>
+            <tr>
+                <th>WeatherId</th>
+                <th>AddWeatherTime</th>
+                <th>AsphaltTemp</th>
+                <th>AirTemp</th>
+                <th>WeatherCond</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var weather in weatherList)
+            {
+                <tr>
+                    <td>@weather.WeatherId</td>
+                    <td>@weather.AddWeatherDate</td>
+                    <td>@weather.AsphaltTemp</td>
+                    <td>@weather.AirTemp</td>
+                    <td>@weather.WeatherCond</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</AuthorizeView>
+
+
+@code {
+    private int userrights = 0;
+    List<Weather> weatherList = new List<Weather>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+        weatherList = DataBase.loadWeatherAll().Where(x => x.AddWeatherDate > DateTime.Now.AddDays(-1)).ToList();
+    }
+
+    private TimeSpan LastMeasurement = TimeSpan.Zero;
+    private String TarmacTemp = "0";
+    private String InputAir { get; set; } = "";
+    private String InputTarmac { get; set; } = "";
+
+    private int WeatherId = 0;
+    private double AsphaltTemp = 0.0;
+    private double AirTemp = 0;
+    private string WeatherCondition = "";
+
+    private void save()
+    {
+
+        Weather New = new Weather(DataBase.getSequence("Weather"), DateTime.Now, AsphaltTemp * 1.0, AirTemp * 1.0, WeatherCondition);
+        weatherList.Add(New);
+        DB.DataBase.saveWeather(New);
+        clear();
+
+    }
+    private void clear()
+    {
+        AirTemp = 0;
+        AsphaltTemp = 0;
+        WeatherCondition = "";
+    }
+}

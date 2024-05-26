@@ -1,0 +1,221 @@
+@page "/tireOrder"
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+    <div class="wrap">
+        <h1>Reifen bestellen</h1>
+    </div>
+
+
+    <EditForm Model="model1" OnValidSubmit="@HandleValidSubmit" Context="tires">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <InputSelect @bind-Value="tireType" required>
+            <option value="none" selected disable hidden>Select an option</option>
+            <option value="1">Slick - Cold (H/E)</option>
+            <option value="2">Slick - Medium (G/D)</option>
+            <option value="3">Slick - Hot (I/F)</option>
+            <option value="4">Intermediate (H+/E+)</option>
+            <option value="5">Rain - Dry wet (T/T)</option>
+            <option value="6">
+                Rain - Heavy wet (A/A)
+            </option>
+        </InputSelect>
+        <InputSelect @bind-Value="InputSipGrov" required>
+            <option value="0" selected disable hidden>Select an option</option>
+            <option value="1">Siped</option>
+            <option value="2">Extra Grooved</option>
+            <option value="3">Sipped and Extra grooved</option>
+        </InputSelect>
+
+        <InputText id="orderDate" type="date" required @bind-Value=orderDate />
+        <InputText id="orderTime" type="time" required @bind-Value="orderTime" />
+        <InputText id="pickUpTime" type="time" required @bind-Value="pickUpTime" />
+
+
+        <button class="btn  btn-primary" type="submit">Submit</button>
+    </EditForm>
+
+    <div id="contingent">
+        <div class="wrap">
+            <h2>Kontingent</h2>
+        </div>
+
+        <table>
+            <tr>
+                <th>Reifenart</th>
+                <th>Mischung</th>
+                <th>Kontingent</th>
+            </tr>
+            <tr>
+                <th>Slicks</th>
+                <th></th>
+                <th> </th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>Cold</th>
+                <th>
+                    @if (currentRace != null)
+                    {
+                        @currentRace.SlickCold
+                    }
+                </th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>Medium</th>
+                <th>
+                    @if (currentRace != null)
+                    {@currentRace.SlickMedium}
+                </th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>Hot</th>
+                <th>
+                    @if (currentRace != null)
+                    {@currentRace.SlickHot}
+                </th>
+            </tr>
+            <tr>
+                <th>Inters</th>
+                <th>Intermediate</th>
+                <th>
+                    @if (currentRace != null)
+                    {@currentRace.Inters}
+                </th>
+            </tr>
+            <tr>
+                <th>Rain</th>
+                <th></th>
+                <th></th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>Dry wet</th>
+                <th>
+                    @if (currentRace != null)
+                    {@currentRace.RainDryWet}
+                </th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>Heavy wet</th>
+                <th>
+                    @if (currentRace != null)
+                    {@currentRace.RainHeavyWet}
+                </th>
+            </tr>
+        </table>
+    </div>
+
+
+</AuthorizeView>
+
+
+@using BlazorApp.Data
+@code {
+    private int userrights = 0;
+    private Race currentRace = null;
+    private int tireType = 0;
+    private int InputSipGrov = 0;
+    public int InputCarId = 0;
+    public List<Car> carList = new List<Car>();
+    string model1 = "";
+    string orderDate = "";
+    string orderTime = "";
+    string pickUpTime = "";
+
+
+    private void HandleValidSubmit()
+    {
+        createNewTireOrder();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+        currentRace = Race.CurrentRace;
+        if (currentRace == null)
+        {
+            Race.setRace(DataBase.loadRacesAll().OrderByDescending(i => i.ID).First());
+            currentRace = Race.CurrentRace;
+        }
+        carList = DataBase.loadCarsAll();
+    }
+
+    public void createNewTireOrder()
+    {
+
+        TireSet set = new TireSet(DataBase.getSequence("TireSet"), tireType, InputSipGrov, orderTime, pickUpTime, orderDate, "" );
+        DataBase.saveTireSet(set);
+        switch (set.tireTypeId)
+        {
+            case 1:
+                currentRace.SlickCold -= 1;
+                break;
+            case 2:
+                currentRace.SlickMedium -= 1;
+                break;
+            case 3:
+                currentRace.SlickHot -= 1;
+                break;
+            case 4:
+                currentRace.Inters -= 1;
+                break;
+            case 5:
+                currentRace.RainDryWet -= 1;
+                break;
+            case 6:
+                currentRace.RainHeavyWet -= 1;
+                break;
+            default:
+                break;
+        }
+        DataBase.saveRace(currentRace);
+        Race.setRace(currentRace);
+        TireType type = new TireType(tireType);
+        bool Siped = false;
+        bool Grooved = false;
+        switch (InputSipGrov)
+        {
+            case 1:
+                Siped = true;
+                break;
+            case 2:
+                Grooved = true;
+                break;
+            case 3:
+                Siped = true;
+                Grooved = true;
+                break;
+            default:
+                break;
+        }
+
+        Tire frontLeft = new Tire(DataBase.getSequence("Tires"), set.tireSetId, "FL", type, currentRace.ID, "In Bearbeitung", Siped, Grooved);
+        DataBase.saveTire(frontLeft);
+        Tire frontRight = new Tire(DataBase.getSequence("Tires"), set.tireSetId, "FR", type, currentRace.ID, "In Bearbeitung", Siped, Grooved);
+        DataBase.saveTire(frontRight);
+        Tire rearLeft = new Tire(DataBase.getSequence("Tires"), set.tireSetId, "RL", type, currentRace.ID, "In Bearbeitung", Siped, Grooved);
+        DataBase.saveTire(rearLeft);
+        Tire rearRight = new Tire(DataBase.getSequence("Tires"), set.tireSetId, "RR", type, currentRace.ID, "In Bearbeitung", Siped, Grooved);
+        DataBase.saveTire(rearRight);
+
+        clear();
+    }
+    private void clear()
+    {
+    tireType = 0;
+    InputSipGrov = 0;
+    InputCarId = 0;
+     orderDate = "";
+     orderTime = "";
+     pickUpTime = "";
+}
+}

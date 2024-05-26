@@ -1,0 +1,129 @@
+﻿@page "/cars"
+@inject ISessionStorageService sessionStorage;
+
+<AuthorizeView>
+    <div id="top">
+        <div class="wrap">
+            <h1>Aktuelle Autos</h1>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <div class="btn-group">
+            <button onClick="document.getElementById('car1').scrollIntoView();">Auto 1</button>
+            <button onClick="document.getElementById('car2').scrollIntoView();">Auto 2</button>
+        </div>
+    </div>
+
+    <div id="car1">
+        <div class="wrap">
+            <h2>Auto 1</h2>
+        </div>
+        <div class="wrap">
+            <p role="status">Fahrer: @driver1</p>
+        </div>
+        <div class="wrap">
+            <div class="container">
+                <img class="carPic" src="/images/CarBlue.png" alt="Blue Car">
+                <div class="top-left">
+                    <h2>Vorne Links</h2>
+                    <p>Reifendruck VL</p>
+                    <p>Reifentyp VL</p>
+                    <p>Reifen-ID VL</p>
+                </div>
+                <div class="top-right">
+                    <h2>Vorne Rechts</h2>
+                    <p>Reifendruck VR</p>
+                    <p>Reifentyp VR</p>
+                    <p>Reifen-ID VR</p>
+                </div>
+                <div class="bottom-left">
+                    <h2>Hinten Links</h2>
+                    <p>Reifendruck HL</p>
+                    <p>Reifentyp HL</p>
+                    <p>Reifen-ID HL</p>
+                </div>
+                <div class="bottom-right">
+                    <h2>Hinten Rechts</h2>
+                    <p>Reifendruck HR</p>
+                    <p>Reifentyp HR</p>
+                    <p>Reifen-ID HR</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="car2">
+        <div class="wrap">
+            <div class="wrap">
+                <h2>Auto 2</h2>
+            </div>
+        </div>
+        <div class="wrap">
+            <p role="status">Fahrer: @driver2</p>
+        </div>
+        <div class="wrap">
+            <div class="container">
+                <img class="carPic" src="/images/CarGreen.png" alt="Blue Car">
+                <div class="top-left">
+                    <h2>Vorne Links</h2>
+                    <p>Reifendruck VL</p>
+                    <p>Reifentyp VL</p>
+                    <p>Reifen-ID VL</p>
+                </div>
+                <div class="top-right">
+                    <h2>Vorne Rechts</h2>
+                    <p>Reifendruck VR</p>
+                    <p>Reifentyp VR</p>
+                    <p>Reifen-ID VR</p>
+                </div>
+                <div class="bottom-left">
+                    <h2>Hinten Links</h2>
+                    <p>Reifendruck HL</p>
+                    <p>Reifentyp HL</p>
+                    <p>Reifen-ID HL</p>
+                </div>
+                <div class="bottom-right">
+                    <h2>Hinten Rechts</h2>
+                    <p>Reifendruck HR</p>
+                    <p>Reifentyp HR</p>
+                    <p>Reifen-ID HR</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wrap">
+        <button class="button btnTop" onClick="document.getElementById('top').scrollIntoView();">Beam me up, Scotty!</button>
+    </div>
+</AuthorizeView>
+
+
+
+
+@code {
+    private String driver1 = "Peter";
+    private String driver2 = "Lustig";
+    private int userrights = 0;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+            var driver = BlazorApp.DB.DataBase.loadDriverById(1);
+            var driver2dr = BlazorApp.DB.DataBase.loadDriverById(2);
+            if(driver != null)
+            {
+                driver1 = driver.Name;
+            }if(driver2dr != null)
+            {
+                driver2 = driver2dr.Name;
+            }
+
+            
+        }
+    }
+
+}

@@ -1,0 +1,137 @@
+﻿@page "/login"
+@page  "/"
+
+@using Blazored.SessionStorage
+@using Microsoft.Extensions.Configuration
+@using BlazorApp.DB
+@using BlazorApp.Data
+
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager;
+@inject ISessionStorageService sessionStorage;
+
+@inject IConfiguration _config
+@inject IJSRuntime JSRuntime;
+@inject TitleChangeService titleState
+
+
+
+<center>
+    <div class="card" style="width:400px">
+        <div class="col-12 row">
+
+            <div class="col-12" style="align-content:center">
+                <EditForm Model="model" OnValidSubmit="@ValidateUser">
+                    <div>
+                        <br /><br />
+                    </div>
+                    <img src="/images/lmsLogo.png" alt="LMS Logo" width="220" height="70">
+                    <img src="/images/usLogo.png" alt="Uni Siegen Logo" width="220" height="70" style="margin-bottom: 20px; margin-top: 20px;">
+                    <div style="text-align:center">
+                        <h3 style="font-weight:bold; font-size: 50px; color:red; text-align:center">Login</h3>
+                    </div>
+                    <div>
+                        <br />
+                    </div>
+                    <div class="col-12 row" style="text-align:center">
+                        <input class="form-control " @bind="userName" placeholder="Benutzername" style="text-align:center" />
+                    </div>
+                    <br />
+                    <div class="col-12 row" style="text-align:center">
+                        <input type="password" class="form-control col-12" @bind="password" placeholder="Passwort" style="text-align:center" />
+                    </div>
+                    <br />
+                    <div class="col-12 row" style="text-align:center">
+                        <span class="col-12" row></span>
+                        <input type="submit" class="form-control col-12 btn btn-primary" value="Login" style="text-align:center" />
+                    </div>
+                    <br /> <br />
+                    <p style="color:red">@displayError</p>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</center>
+
+
+@code {
+    private string userName;
+    private string password;
+    private string model = "";
+    string displayError = "";
+    protected async override Task OnInitializedAsync()
+    {
+        titleState.Title = "Login";
+        ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsLoggedOut();
+
+    }
+    private async Task<bool> ValidateUser()
+    {
+        if (userName.isNotNullOrEmpty() && password.isNotNullOrEmpty())
+        {
+            // wenn user und pw eingetragen sind user laden
+            User loginUser = DataBase.loadUserByUserName(secureStringForInjection(userName));
+            if (loginUser == null)
+            {
+                displayError = "Der Benutzer existiert nicht.";
+            }
+            else
+            {
+                if (loginUser.Password == password)
+                {
+                    displayError = null;
+                    //wenn pw stimmt user authentifizieren
+                    ((CustomAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(userName);
+                    await sessionStorage.SetItemAsync("Name", userName);
+                    await sessionStorage.SetItemAsync("Userrights", loginUser.Priviledges);
+                    switch (loginUser.Priviledges)
+                    {
+                        case 1:
+                            NavigationManager.NavigateTo("/cars", true);
+                            break;
+                        case 2:
+                            NavigationManager.NavigateTo("/cars", true);
+                            break;
+                        default:
+                            NavigationManager.NavigateTo("/weathersettings", true);
+                            break;
+                    }
+
+                    User.CurrentUser = loginUser;
+                }
+                else
+                {
+                    displayError = "Das Passwort ist falsch.";
+                }
+            }
+
+
+
+        }
+        else
+        {
+            displayError = "Bitte geben Sie einen Benutzernamen und ein Passwort ein";
+        }
+
+
+        return await Task.FromResult(true);
+
+    }
+    private string secureStringForInjection(string testString)
+    {
+
+        string output = "";
+        foreach (char item in testString)
+        {
+            if (item == '\'')
+            {
+                output += '\'';
+            }
+            output += item;
+        }
+
+        return output;
+    }
+
+}

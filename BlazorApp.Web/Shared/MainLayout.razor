@@ -1,0 +1,36 @@
+@using BlazorApp.Data
+@using BlazorApp.Shared
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider authenticationStateProvider
+@inject NavigationManager navigationManager
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <div class="main">
+        <div class="top-row px-4">
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/login" @onclick="(() => Logout())">Logout</a>
+                </Authorized>
+                <NotAuthorized>
+                   
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</div>
+@code{
+    string NavMenuCssClass { get; set; }
+    public void Logout()
+    {
+        ((BlazorApp.Data.CustomAuthenticationStateProvider)authenticationStateProvider).MarkUserAsLoggedOut();
+    }
+
+}

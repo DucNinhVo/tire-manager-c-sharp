@@ -1,0 +1,49 @@
+@page "/tireCirculation"
+@inject ISessionStorageService sessionStorage;
+
+    <AuthorizeView>
+<h3>Reifen im Umlauf</h3>
+<table>
+<tr>
+    <th>Typ</th>
+    <th>Mischung</th>
+    <th>Grooved</th>
+    <th>Sipped</th>
+</tr>
+@foreach (Tire Reifen in AllTires)
+{
+    if(Reifen.Status == "Im Umlauf" && Reifen.RaceId == Race.CurrentRace.ID)
+    {
+    <tr>
+        <th>@Reifen.Type.Type</th>
+        <th>@Reifen.Type.Variant</th>
+        <th>@Reifen.Grooved</th>
+        <th>@Reifen.Sipped</th>
+    </tr>  
+    }
+}
+</table>
+    </AuthorizeView>
+
+
+@code {
+    List<Tire> AllTires =new List<Tire>();
+
+    private int userrights = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await sessionStorage.ContainKeyAsync("Userrights"))
+        {
+            userrights = Int32.Parse(await sessionStorage.GetItemAsync<string>("Userrights"));
+        }
+
+        if (Race.CurrentRace == null)
+        {
+            Race.setRace(DataBase.loadRacesAll().OrderByDescending(i => i.ID).First().Name);
+        }
+        AllTires = DB.DataBase.loadTireAll();
+
+    }
+
+}
