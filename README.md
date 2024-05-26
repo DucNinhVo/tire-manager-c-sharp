@@ -1,3 +1,1 @@
-Programmierpraktikum
-Gruppenarbeit 
-Projekt 1
+Programmierpraktikum - Gruppenarbeit - Projekt 1
